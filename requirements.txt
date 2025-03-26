@@ -1,0 +1,14 @@
+gradio
+numpy
+chromadb
+transformers
+groq
+langchain
+langchain-groq
+langchain-community
+pymupdf
+python-docx
+gtts
+python-pptx
+chardet
+langdetect
