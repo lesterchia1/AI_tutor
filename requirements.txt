@@ -1,22 +1,25 @@
+# Core
 streamlit
 numpy
-chromadb
 transformers
-groq
-langchain
-langchain-groq
-langchain-community
-pymupdf
-python-docx
-gtts
-python-pptx
-chardet
-langdetect
 torch
 torchaudio
 sentence-transformers
 huggingface_hub
-chromadb[server]
-uvicorn
-fastapi
 
+# AI Models
+groq
+langchain
+langchain-groq
+langchain-community
+
+# Document processing
+pymupdf
+python-docx
+python-pptx
+chardet
+langdetect
+gtts
+
+# FAISS
+faiss-cpu
