@@ -12,3 +12,5 @@ gtts
 python-pptx
 chardet
 langdetect
+torch
+torchaudio
