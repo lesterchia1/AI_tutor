@@ -16,3 +16,7 @@ torch
 torchaudio
 sentence-transformers
 huggingface_hub
+chromadb[server]
+uvicorn
+fastapi
+
