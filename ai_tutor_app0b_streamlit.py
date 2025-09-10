@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import numpy as np
 from transformers import pipeline
@@ -15,7 +14,7 @@ import re
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 
@@ -29,11 +28,13 @@ groq.api_key = os.getenv("GROQ_API_KEY")
 
 chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=groq.api_key)
 
-# Initialize embedding model
-embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
-# Initialize vectorstore (FAISS) in-memory
-vectorstore = FAISS.from_texts([], embedding_model)
+os.makedirs("chroma_db", exist_ok=True)
+embedding_model = HuggingFaceEmbeddings()
+vectorstore = Chroma(
+    embedding_function=embedding_model,
+    persist_directory="chroma_db"
+)
+vectorstore.persist()
 
 chat_memory = []
 
@@ -125,7 +126,8 @@ def process_document(file):
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     docs = [Document(page_content=c) for c in text_splitter.split_text(content)]
-    vectorstore.add_documents(docs)  # FAISS stores in-memory
+    vectorstore.add_documents(docs)
+    vectorstore.persist()
     return generate_quiz(content)
 
 # -----------------------------
