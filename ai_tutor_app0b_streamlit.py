@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-from transformers import pipeline
 import os
 import groq
 import uuid
@@ -23,16 +22,16 @@ from langchain.docstore.document import Document
 # -----------------------------
 st.set_page_config(page_title="AI Tutor", layout="wide")
 
-transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-base.en")
-groq.api_key = os.getenv("GROQ_API_KEY")
+# Initialize Groq client (for transcription + chat)
+groq_client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=groq.api_key)
+chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
 
 os.makedirs("chroma_db", exist_ok=True)
 embedding_model = HuggingFaceEmbeddings()
 vectorstore = Chroma(
     embedding_function=embedding_model,
-    #persist_directory="chroma_db"
+    # persist_directory="chroma_db"
 )
 vectorstore.persist()
 
@@ -46,6 +45,15 @@ You are an AI assistant specialized in education and assessment creation...
 # -----------------------------
 # Helper Functions
 # -----------------------------
+def transcribe_audio(file_path):
+    """Transcribe audio using Groq Whisper API"""
+    with open(file_path, "rb") as f:
+        transcript = groq_client.audio.transcriptions.create(
+            file=f,
+            model="whisper-large-v3"
+        )
+    return transcript["text"]
+
 def clean_response(response):
     cleaned_text = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
     cleaned_text = re.sub(r"(\*\*|\*|\[|\])", "", cleaned_text)
@@ -135,7 +143,7 @@ def process_document(file):
 # -----------------------------
 st.title("📚 AI Tutor - Streamlit POC")
 
-tab1, tab2, tab3 = st.tabs(["💬 AI Chatbot", "📄 Upload & Quiz", "🎥 Intro Video"])
+tab1, tab2, tab3, tab4 = st.tabs(["💬 AI Chatbot", "📄 Upload & Quiz", "🎥 Intro Video", "🎤 Audio Transcription"])
 
 # --- Tab 1: Chatbot ---
 with tab1:
@@ -151,7 +159,7 @@ with tab1:
 # --- Tab 2: Upload & Quiz ---
 with tab2:
     st.subheader("Upload Notes & Generate Quiz")
-    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, PPTX)", type=["pdf", "docx", "pptx", "txt"])
+    uploaded_file = st.file_uploader("Upload a file (PDF, DOCX, PPTX, TXT)", type=["pdf", "docx", "pptx", "txt"])
     if uploaded_file:
         with open(uploaded_file.name, "wb") as f:
             f.write(uploaded_file.read())
@@ -162,3 +170,13 @@ with tab2:
 with tab3:
     st.subheader("Introduction Video")
     st.video("https://github.com/lesterchia1/AI_tutor/raw/main/We%20not%20me%20video.mp4")
+
+# --- Tab 4: Audio Transcription ---
+with tab4:
+    st.subheader("Upload an Audio File for Transcription")
+    audio_file = st.file_uploader("Upload an audio file", type=["mp3", "wav", "m4a"])
+    if audio_file:
+        with open(audio_file.name, "wb") as f:
+            f.write(audio_file.read())
+        transcript_text = transcribe_audio(audio_file.name)
+        st.text_area("Transcription", transcript_text, height=300)
