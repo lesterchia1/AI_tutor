@@ -32,7 +32,7 @@ os.makedirs("chroma_db", exist_ok=True)
 embedding_model = HuggingFaceEmbeddings()
 vectorstore = Chroma(
     embedding_function=embedding_model,
-    persist_directory="chroma_db"
+    #persist_directory="chroma_db"
 )
 vectorstore.persist()
 
