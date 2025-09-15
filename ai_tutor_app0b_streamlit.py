@@ -29,11 +29,12 @@ chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=os.getenv("G
 
 os.makedirs("chroma_db", exist_ok=True)
 embedding_model = HuggingFaceEmbeddings()
+
+# FIXED: Initialize Chroma vectorstore with correct syntax
 vectorstore = Chroma(
     embedding_function=embedding_model,
-    # persist_directory="chroma_db"
+    persist_directory="chroma_db"
 )
-vectorstore.persist()
 
 chat_memory = []
 
@@ -52,7 +53,7 @@ def transcribe_audio(file_path):
             file=f,
             model="whisper-large-v3"
         )
-    return transcript["text"]
+    return transcript.text  # FIXED: Changed from transcript["text"] to transcript.text
 
 def clean_response(response):
     cleaned_text = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
@@ -135,7 +136,7 @@ def process_document(file):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     docs = [Document(page_content=c) for c in text_splitter.split_text(content)]
     vectorstore.add_documents(docs)
-    vectorstore.persist()
+    vectorstore.persist()  # FIXED: This should work now with the correct initialization
     return generate_quiz(content)
 
 # -----------------------------
