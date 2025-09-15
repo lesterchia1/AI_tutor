@@ -9,13 +9,12 @@ import docx
 import gtts
 from pptx import Presentation
 import re
-import requests
 import json
+import pickle
 
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 
 # -----------------------------
@@ -28,29 +27,9 @@ groq_client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=os.getenv("GROQ_API_KEY"))
 
-os.makedirs("chroma_db", exist_ok=True)
-
-# FIXED: Use a simple TF-IDF or count-based approach instead of heavy embeddings
-# Alternatively, use a lightweight embedding method
-class SimpleEmbeddings:
-    def __init__(self):
-        pass
-    
-    def embed_documents(self, texts):
-        # Simple dummy embeddings - in production, you might want to use a proper lightweight embedding
-        return [np.random.rand(384).tolist() for _ in texts]
-    
-    def embed_query(self, text):
-        return np.random.rand(384).tolist()
-
-# Use simple embeddings
-embedding_model = SimpleEmbeddings()
-
-# Initialize Chroma vectorstore with simple embeddings
-vectorstore = Chroma(
-    embedding_function=embedding_model,
-    persist_directory="chroma_db"
-)
+# Simple document storage instead of Chroma
+os.makedirs("documents", exist_ok=True)
+document_store = []
 
 chat_memory = []
 
@@ -88,11 +67,23 @@ def generate_quiz(content):
     return clean_response(response.content)
 
 def retrieve_documents(query):
-    try:
-        results = vectorstore.similarity_search(query, k=3)
-        return [doc.page_content for doc in results]
-    except:
-        return ["No relevant documents found."]
+    """Simple keyword-based document retrieval"""
+    if not document_store:
+        return ["No documents available. Please upload documents first."]
+    
+    # Simple keyword matching (case insensitive)
+    query_words = query.lower().split()
+    relevant_docs = []
+    
+    for doc in document_store:
+        doc_text = doc.lower()
+        matches = sum(1 for word in query_words if word in doc_text)
+        if matches > 0:
+            relevant_docs.append(doc)
+            if len(relevant_docs) >= 3:  # Limit to 3 documents
+                break
+    
+    return relevant_docs if relevant_docs else ["No relevant documents found for your query."]
 
 def chat_with_groq(user_input):
     relevant_docs = retrieve_documents(user_input)
@@ -173,18 +164,29 @@ def process_document(file):
         if not content.strip():
             return "Error: Could not extract text from the document."
 
-        # Store document content for retrieval (simple approach)
+        # Store document content for retrieval
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        docs = [Document(page_content=chunk) for chunk in text_splitter.split_text(content)]
+        chunks = text_splitter.split_text(content)
         
-        # Add to vectorstore
-        vectorstore.add_documents(docs)
-        vectorstore.persist()
+        # Add chunks to document store
+        document_store.extend(chunks)
+        
+        # Save document store to file
+        with open("documents/document_store.pkl", "wb") as f:
+            pickle.dump(document_store, f)
         
         return generate_quiz(content)
         
     except Exception as e:
         return f"Error processing document: {str(e)}"
+
+# Load existing documents if available
+try:
+    if os.path.exists("documents/document_store.pkl"):
+        with open("documents/document_store.pkl", "rb") as f:
+            document_store = pickle.load(f)
+except:
+    document_store = []
 
 # -----------------------------
 # Streamlit UI
@@ -215,6 +217,9 @@ with tab2:
                 f.write(uploaded_file.read())
             quiz = process_document(uploaded_file)
         st.text_area("Generated Quiz", quiz, height=400)
+        
+        # Show document stats
+        st.info(f"Document processed. Total document chunks in memory: {len(document_store)}")
 
 # --- Tab 3: Intro Video ---
 with tab3:
