@@ -13,9 +13,9 @@ import json
 import pickle
 
 from langchain_groq import ChatGroq
-from langchain.schema import HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 
 # -----------------------------
 # Init Models
