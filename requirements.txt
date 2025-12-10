@@ -1,25 +1,40 @@
 # Core
-streamlit
-numpy
-transformers
-torch
-torchaudio
-sentence-transformers
-huggingface_hub
+#streamlit
+#numpy
+#transformers
+#torch
+#torchaudio
+#sentence-transformers
+#huggingface_hub
 
 # AI Models
-groq
-langchain
-langchain-groq
-langchain-community
+#groq
+#langchain
+#langchain-groq
+#langchain-community
 
 # Document processing
-pymupdf
-python-docx
-python-pptx
-chardet
-langdetect
-gtts
+#pymupdf
+#python-docx
+#python-pptx
+#chardet
+#langdetect
+#gtts
 
 # FAISS
-faiss-cpu
+#faiss-cpu
+
+#for streamlit
+streamlit>=1.52.1
+groq>=0.6.0
+langchain-groq>=1.1.0
+langchain>=0.3.27,<0.4.0
+langchain-community>=0.3.27,<0.4.0
+langchain-core>=1.0.3
+pymupdf4>=1.24.9
+python-docx>=1.1.2
+python-pptx>=1.0.2
+chardet>=5.2.0
+gtts>=2.5.1
+numpy>=2.2.3
+Pillow>=11.1.0
