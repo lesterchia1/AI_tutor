@@ -41,15 +41,44 @@ if "audio_file" not in st.session_state:
     st.session_state.audio_file = None
 
 # Check for API key
-if not os.getenv("GROQ_API_KEY"):
-    st.error("❌ GROQ_API_KEY not found. Please add it to your Streamlit secrets.")
-    st.stop()
+#if not os.getenv("GROQ_API_KEY"):
+#    st.error("❌ GROQ_API_KEY not found. Please add it to your Streamlit secrets.")
+#    st.stop()
 
 # Initialize Groq API
-groq.api_key = os.getenv("GROQ_API_KEY")
+#groq.api_key = os.getenv("GROQ_API_KEY")
 
 # Initialize Chat Model
-chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=groq.api_key)
+#chat_model = ChatGroq(model_name="llama-3.3-70b-versatile", api_key=groq.api_key)
+
+
+# ===========================================
+# SIMPLE FIX: Use st.secrets.get()
+# ===========================================
+# This works for both Streamlit Cloud AND local development
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
+
+# Fallback to environment variable
+if not GROQ_API_KEY:
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+# Check if we have a key
+if not GROQ_API_KEY:
+    st.error("❌ GROQ_API_KEY not found in secrets or environment!")
+    st.stop()
+
+# Show debug info (remove in production)
+st.sidebar.info(f"API Key loaded: {'✓' if GROQ_API_KEY else '✗'}")
+
+# Initialize with the key
+groq.api_key = GROQ_API_KEY
+
+# Initialize Chat Model
+chat_model = ChatGroq(
+    model_name="llama-3.3-70b-versatile", 
+    api_key=GROQ_API_KEY  # Pass key directly, not groq.api_key
+)
+
 
 # Initialize Embeddings and ChromaDB
 os.makedirs("chroma_db", exist_ok=True)
