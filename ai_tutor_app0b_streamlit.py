@@ -63,7 +63,7 @@ def generate_quiz(content):
         content = content[:4000] + "..."
     
     prompt = f"{quiz_prompt}\n\nDocument content:\n{content}"
-    response = chat_model([HumanMessage(content=prompt)])
+    response = chat_model.invoke(prompt)  # ← CHANGED TO invoke()
     return clean_response(response.content)
 
 def retrieve_documents(query):
@@ -92,7 +92,7 @@ def chat_with_groq(user_input):
     conversation_history = "\n".join(chat_memory[-10:]) if chat_memory else ""
     prompt = f"{system_prompt}\n\nConversation History:\n{conversation_history}\n\nUser Input: {user_input}\n\nContext:\n{context}"
 
-    response = chat_model([HumanMessage(content=prompt)])
+    response = chat_model.invoke(prompt)
     cleaned_response = clean_response(response.content)
 
     chat_memory.append(f"User: {user_input}")
